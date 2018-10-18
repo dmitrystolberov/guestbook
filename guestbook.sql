@@ -34,3 +34,5 @@ CREATE TABLE `comments` (
   CONSTRAINT `fk_idx_image_id` FOREIGN KEY (`image_id`) REFERENCES `images` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_idx_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+INSERT INTO  users (role, login, password) VALUES (1, 'user', '9e0aedbd22690905e215a80f430006cb'), (2, 'admin', 'c173b8570d46ebba735c02916fdd54f2');
