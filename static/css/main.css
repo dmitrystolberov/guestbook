@@ -1,0 +1,10 @@
+.row {
+    float: left;
+}
+.clear {
+    float: none;
+    clear: both;
+}
+a {
+    padding-right: 20px;
+}
