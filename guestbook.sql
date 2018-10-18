@@ -25,7 +25,7 @@ CREATE TABLE `comments` (
   `comment_type_id` int(4) unsigned NOT NULL,
   `text` text COLLATE utf8_bin,
   `image_id` int(10) unsigned DEFAULT NULL,
-  `status` int(4) unsigned DEFAULT NULL,
+  `status` int(4) unsigned NOT NULL DEFAULT 1,
   `created_date` DATETIME NOT NULL DEFAULT NOW(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `comment_id_UNIQUE` (`id`),

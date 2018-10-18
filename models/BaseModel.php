@@ -27,9 +27,6 @@ abstract class BaseModel
     public function setAttributes($attributes)
     {
         foreach ($attributes as $attributeName => $attributeValues) {
-            if ($attributeName == 'id') {
-                continue;
-            }
             if (property_exists($this, $attributeName)) {
                 $this->$attributeName = $attributeValues;
             }
@@ -71,6 +68,13 @@ abstract class BaseModel
         return $this->id;
     }
 
+    public function delete()
+    {
+        if ($this->id) {
+            $this->execute('DELETE FROM ' . $this->getTableName() . ' WHERE id=' . $this->id);
+        }
+    }
+
     /**
      * @return int
      */
@@ -78,7 +82,7 @@ abstract class BaseModel
         $attributes = get_object_vars($this);
         $insertFields = $values = $params = [];
         foreach ($attributes as $attributeName => $attributeValue) {
-            if ($attributeName == 'id') {
+            if ($attributeName == 'id' || empty($attributeValue)) {
                 continue;
             }
             $insertFields[] = $attributeName;
@@ -87,7 +91,7 @@ abstract class BaseModel
         $connection = DbConnection::getInstance()->getConnection();
         $statement = $connection->prepare(
             'INSERT INTO ' . $this->getTableName() . ' (' . implode(', ', $insertFields) . ')'
-            . ' VALUES (' . implode(', ', $params) . ')'
+            . ' VALUES (' . implode(', ', array_keys($params)) . ')'
         );
         $statement->execute($params);
         return $connection->lastInsertId();
@@ -115,7 +119,7 @@ abstract class BaseModel
         $statement = $this->executeFind($attributes);
         $res =  $statement->fetch(PDO::FETCH_OBJ);
         if ($res) {
-            $model = self::model(true);
+            $model = $this->model(true);
             $resAttributes = get_object_vars($res);
             $model->setAttributes($resAttributes);
             return $model;

@@ -60,7 +60,7 @@ class Session
 
     public function restoreUserIdFromSession()
     {
-        $this->user_id = (!empty($_SESSION['user_id'])) ?? null;
+        $this->user_id = (!empty($_SESSION['user_id'])) ? $_SESSION['user_id'] : null;
     }
 
     /**

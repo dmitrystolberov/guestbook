@@ -1,11 +1,5 @@
 <?php
 session_start();
-function debug($value) {
-    echo '<pre>';
-    print_r($value);
-    echo '</pre>';
-    die;
-}
 include ('components/Request.php');
 include ('components/Session.php');
 include ('controllers/BaseController.php');

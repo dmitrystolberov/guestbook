@@ -149,9 +149,9 @@ class Request
                 }
             } elseif (isset($_SERVER['ORIG_PATH_INFO'])) {
                 $this->requestUri = $_SERVER['ORIG_PATH_INFO'];
-                if (!empty($_SERVER['QUERY_STRING'])) {
-                    $this->requestUri .= '?' . $_SERVER['QUERY_STRING'];
-                }
+            }
+            if (($pos = strpos($this->requestUri, '?')) !== false) {
+                $this->requestUri = substr($this->requestUri, 0, $pos);
             }
         }
         return $this->requestUri;

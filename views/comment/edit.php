@@ -1,5 +1,5 @@
 <p>
-    Adding a comment
+    Edditing a comment #<?= $comment->id; ?>
 </p>
 <p>
     You may Add either a single image or a text.
@@ -10,7 +10,7 @@
     <div class="form-group">
         <label class="control-label col-sm-2" for="text">Comment</label>
         <div class="col-sm-5">
-            <textarea class="form-control" rows="5" id="text" name="text" placeholder="Enter your comment"></textarea>
+            <textarea class="form-control" rows="5" id="text" name="text" placeholder="Enter your comment"><?= $comment->text?></textarea>
         </div>
     </div>
     <h4>OR</h4>
@@ -21,8 +21,16 @@
         </div>
     </div>
     <div class="form-group">
+        <?php
+        if ($comment->comment_type_id == Comment::TYPE_ID_IMAGE) {
+            ?><img height="200px" src="/img/<?= $image->image_name?>"><?php
+        }
+        ?>
+    </div>
+    <div class="form-group">
         <div class="col-sm-offset-2 col-sm-10">
-            <button type="submit" class="btn btn-success">Add</button>
+            <button type="submit" class="btn btn-success">Save</button>
+            <a class="btn btn-default" role="button" href="/">Cancel</a>
         </div>
     </div>
 </form>

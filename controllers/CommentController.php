@@ -3,13 +3,51 @@
 class CommentController extends BaseController
 {
 
-
     public function actionList()
     {
         $user = Session::getInstance()->getUser();
-        $status = (!empty($user) && $user->role_id == User::ROLE_USER) ? Comment::STATUS_APPROVED : null;
+        $status = (empty($user) || (int)$user->role == User::ROLE_USER) ? Comment::STATUS_APPROVED : null;
         $list = Comment::model()->findAll($status);
         $this->render('list', compact('list', 'user'));
+    }
+
+    public function actionDelete()
+    {
+        $this->checkAccess();
+        $commentId = Request::getInstance()->getParam('id');
+        $comment = Comment::model()->findByAttributes(['id' => $commentId]);
+        if ($comment) {
+            if ($comment->comment_type_id == Comment::TYPE_ID_IMAGE) {
+                $image = Image::model()->findByAttributes(['id' => $comment->image_id]);
+                if ($image) {
+                    unlink('img/' . $image->image_name);
+                }
+                $image->delete();
+            }
+            $comment->delete();
+        }
+        Request::getInstance()->redirect('/');
+    }
+
+    public function actionEdit()
+    {
+        $this->checkAccess();
+        $commentId = Request::getInstance()->getParam('id');
+        $comment = Comment::model()->findByAttributes(['id' => $commentId]);
+        $image = $oldImageName = null;
+        if ($comment && $comment->comment_type_id == Comment::TYPE_ID_IMAGE) {
+            $image = Image::model()->findByAttributes(['id' => $comment->image_id]);
+            if ($image) {
+                $oldImageName = $image->image_name;
+            }
+        }
+        if (Request::getInstance()->getIsPostRequest()) {
+            $commentId = $this->saveComment($comment, $oldImageName);
+            if ($commentId) {
+                Request::getInstance()->redirect('/');
+            }
+        }
+        $this->render('edit', compact('comment', 'image'));
     }
 
     public function actionAdd()
@@ -21,48 +59,76 @@ class CommentController extends BaseController
             $request->redirect('/');
         }
         if ($request->getIsPostRequest()) {
-
-            $text = $request->getParam('text');
             $comment = new Comment();
             $comment->user_id = $user->id;
-            if (!empty($text)) {
-                $comment->text = $text;
-                $comment->comment_type_id = Comment::TYPE_ID_TEXT;
-            } elseif (!empty($_FILES)) {
-                if ($_FILES['file']['error'] == 0) {
-                    $extsAllowed = array('jpg', 'jpeg', 'png', 'gif');
-                    $extUpload = strtolower(substr(strrchr($_FILES['file']['name'], '.'), 1));
-                    if (in_array($extUpload, $extsAllowed)) {
-                        $name = "img/{$_FILES['file']['name']}";
-                        $result = move_uploaded_file($_FILES['file']['tmp_name'], $name);
-
-                        if ($result) {
-                            $image = new Image();
-                            $image->setAttributes([
-                                'image_name' => $name
-                            ]);
-                            $imageId = $image->save();
-                            if (!empty($imageId)) {
-                                $comment->comment_type_id = Comment::TYPE_ID_IMAGE;
-                                $comment->image_id = $imageId;
-                            } else {
-                                unlink($name);
-                            }
-                        }
-                    } else {
-                        echo 'File is not valid. Please try again';
-                    }
-                }
-
-            } else {
-                //error
-            }
-            $commentId = Comment::model()->insert();
+            $commentId = $this->saveComment($comment);
             if ($commentId) {
-                Request::getInstance()->redirect('/comment/list');
+                Request::getInstance()->redirect('/');
             }
         }
         $this->render('add');
+    }
+
+    /**
+     * @param $comment
+     * @param null $oldImageName
+     * @return int
+     */
+    private function saveComment($comment, $oldImageName = null)
+    {
+        $request = Request::getInstance();
+        $text = $request->getParam('text');
+        if (!empty($text)) {
+            $comment->text = $text;
+            $comment->comment_type_id = Comment::TYPE_ID_TEXT;
+            $comment->image_id = null;
+            if ($oldImageName) {
+                unlink('img/' . $oldImageName);
+            }
+        } elseif (!empty($_FILES)) {
+            $comment->text = null;
+            $imageName = $this->uploadImage($oldImageName);
+            if ($imageName) {
+                $image = new Image();
+                $image->setAttributes([
+                    'image_name' => $imageName
+                ]);
+                $imageId = $image->save();
+                if (!empty($imageId)) {
+                    $comment->comment_type_id = Comment::TYPE_ID_IMAGE;
+                    $comment->image_id = $imageId;
+                }
+            }
+        }
+        return $comment->save();
+    }
+
+    /**
+     * @param null $oldImageName
+     * @return string
+     */
+    private function uploadImage($oldImageName = null)
+    {
+        if (!empty($_FILES)) {
+            if ($_FILES['file']['error'] == 0) {
+                $extsAllowed = array('jpg', 'jpeg', 'png', 'gif');
+                $extUpload = strtolower(substr(strrchr($_FILES['file']['name'], '.'), 1));
+                $tmpNameParts = explode('/', $_FILES['file']['tmp_name']);
+                $imageName = end($tmpNameParts) . '.' . $extUpload;
+                if (in_array($extUpload, $extsAllowed)) {
+                    $target = 'img/' . $imageName;
+                    $result = move_uploaded_file($_FILES['file']['tmp_name'], $target);
+
+                    if ($result) {
+                        if ($oldImageName) {
+                            unlink('img/' . $oldImageName);
+                        }
+                        return $imageName;
+                    }
+                }
+            }
+
+        }
     }
 
     public function actionReject()
@@ -89,13 +155,13 @@ class CommentController extends BaseController
                 $model->save();
             }
         }
-        Request::getInstance()->redirect('/comment/list');
+        Request::getInstance()->redirect('/');
     }
 
     private function checkAccess()
     {
         $user = Session::getInstance()->getUser();
-        if (empty($user) || $user->role_id == User::ROLE_USER) {
+        if (empty($user) || (int)$user->role == User::ROLE_USER) {
             Request::getInstance()->redirect('/');
         }
     }

@@ -3,5 +3,7 @@ RewriteBase /
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-
 RewriteRule ^(.*)$ index.php
+
+RewriteCond %{REQUEST_URI} !/img/.*
+RewriteRule ^(.*\.(gif|jpg|png))$ img/$1 [QSA,L]

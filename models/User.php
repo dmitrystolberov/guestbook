@@ -9,7 +9,7 @@ class User extends BaseModel
     public $id;
     public $login;
     public $role;
-    private $password;
+    protected $password;
 
     /**
      * Returns the static model of the specified AR class.
