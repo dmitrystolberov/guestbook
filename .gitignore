@@ -1,0 +1,5 @@
+.idea/*
+img/*
+
+# Un-ignore '.gitkeep' files to add empty directories
+!**.gitkeep
